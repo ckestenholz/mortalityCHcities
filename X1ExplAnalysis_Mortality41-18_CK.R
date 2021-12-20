@@ -31,12 +31,13 @@ col_reg <- c(brewer.pal(12, "Paired"), "black")
 col_reg[11] <- "Khaki4" # instead of yellow
 
 # summarize results:
-RES_RATE <- matrix(NA, nrow=10, ncol=8)
-colnames(RES_RATE) <- c("1947: Hot Week", "1947: Average Week", "2003: Hot Week", "2003: Average Week","2015: Hot Week", "2015: Average Week","2018: Hot Week", "2018: Average Week")
-rownames(RES_RATE) <- names(data)
+RES_RATE <- matrix(NA, nrow=8, ncol=12)
+colnames(RES_RATE) <- c("1947: Hot Week", "1947: Average Week", "1947: Ratio Hot/Average Week", "2003: Hot Week", "2003: Average Week", "2003: Ratio Hot/Average Week", "2015: Hot Week", "2015: Average Week", "2015: Ratio Hot/Average Week", "2018: Hot Week", "2018: Average Week", "2018: Ratio Hot/Average Week")
+rownames(RES_RATE) <- names(data)[-c(3,4)]
 RES_PERC <- RES_RATE
 
-for (i in seq(data)) {
+# for (i in seq(data)) {
+for (i in seq(data)[-c(3,4)]) { # exclude Biel and Chaux-de-Fonds from the analysis
 citta <- city[i]
 dta <- data.frame(data[[i]])
 
@@ -167,7 +168,7 @@ mort_pred_obs1 <- ggplot() +
   theme_minimal() +
   ggtitle(paste0("Observed and predicted weekly all-cause mortality: 1941-1960", "\n", citta)) +
   scale_x_continuous(name="weeks (1941-1960)", breaks=yearli, labels=yearli_t) +
-  scale_y_continuous(name="deaths") +
+  scale_y_continuous(name="deaths", breaks=seq(0,180,10), minor_breaks=seq(5,175,10)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 mort_pred_obs1
 ggsave(paste0(getwd(), "/img/", citta, "_mort_pred_obs-41-60", ".pdf", sep=""), device = "pdf", width = 15)
@@ -187,7 +188,7 @@ mort_pred_obs2 <- ggplot() +
   theme_minimal() +
   ggtitle(paste0("Observed and predicted weekly all-cause mortality: 1999-2018", "\n", citta)) +
   scale_x_continuous(name="weeks (1999-2018)", breaks=yearli, labels=yearli_t) +
-  scale_y_continuous(name="deaths") +
+  scale_y_continuous(name="deaths", breaks=seq(0,180,10), minor_breaks=seq(5,175,10)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 mort_pred_obs2
 ggsave(paste0(getwd(), "/img/", citta, "_mort_pred_obs-99-18", ".pdf", sep=""), device = "pdf", width = 15)
@@ -322,16 +323,21 @@ dta_yr$negexcess <- dta_yr$excess; dta_yr$negexcess[dta_yr$negexcess>0] <-0
 # Evaluate Results #
 ####################
 
-# hot event deaths per day:
+# hot event deaths per week:
 dta_yr$hot <- hwDAYS
 
-# calculate daily mortality for a hot day:
+# calculate daily mortality for a hot week:
 RES_RATE[paste0(citta),paste0(yr,": Hot Week", sep="")] <- sum(dta_yr$deaths * dta_yr$hot) / sum(dta_yr$hot)
 RES_PERC[paste0(citta),paste0(yr,": Hot Week", sep="")] <- sum(dta_yr$excess * dta_yr$hot) / sum(dta_yr$hot)
 
-# calculate average daily mortality for a summer day:
+# calculate average daily mortality for a summer week:
 RES_RATE[paste0(citta),paste0(yr,": Average Week", sep="")] <- sum(dta_yr$deaths) / length(dta_yr$week) # rate
 RES_PERC[paste0(citta),paste0(yr,": Average Week", sep="")] <- sum(dta_yr$excess) / length(dta_yr$week) # percentage
+
+# calculate the ratio of a hot / average weekly mortality for a summer week:
+RES_RATE[paste0(citta),paste0(yr,": Ratio Hot/Average Week", sep="")] <- RES_RATE[paste0(citta),paste0(yr,": Hot Week", sep="")] / RES_RATE[paste0(citta),paste0(yr,": Average Week", sep="")]
+RES_PERC[paste0(citta),paste0(yr,": Ratio Hot/Average Week", sep="")] <- RES_PERC[paste0(citta),paste0(yr,": Hot Week", sep="")] / RES_PERC[paste0(citta),paste0(yr,": Average Week", sep="")]
+
 
 ####################
 ####################
@@ -391,7 +397,7 @@ ex_mort_yr <- ggplot(data=dta_yr) +
   ggtitle(paste0("All-cause weekly mortality: Summer ", yr, "\n", citta, sep=" ")) +
   scale_x_continuous(name= "weeks", breaks=summer_m, minor_breaks=summer_m, labels=summer_t, limits=c(min(summer), max(summer))) +
   guides(x =  guide_axis(angle = 60)) +
-  scale_y_continuous(name = "percentage of excess mortality")
+  scale_y_continuous(name = "percentage of excess mortality", breaks=seq(-120,120,10), minor_breaks=seq(-115,115,10))
   #                 sec.axis = sec_axis(~.-50, name = "maximum temperature (\u00B0C) and humidity as mean partial pressure (hPa)", breaks=c(0,10,20,30,40)))
 ex_mort_yr
 
@@ -451,15 +457,15 @@ write.xlsx(RES_PERC, file = paste0(getwd(), "/output/RES_RATE.xlsx", sep=""), sh
 setwd("D:/data/mortalityCHcities/img")
 
 # Mortality 
-pdf_combine(c("Basel_mort_pred_obs-41-60.pdf", "Bern_mort_pred_obs-41-60.pdf", "Biel_mort_pred_obs-41-60.pdf", "Geneva_mort_pred_obs-41-60.pdf", "La Chaux-de-Fonds_mort_pred_obs-41-60.pdf", "Lausanne_mort_pred_obs-41-60.pdf", "Lucerne_mort_pred_obs-41-60.pdf", "St. Gallen_mort_pred_obs-41-60.pdf", "Winterthur_mort_pred_obs-41-60.pdf", "Zurich_mort_pred_obs-41-60.pdf"), "summary/mort_pred_obs-41-60.pdf")
+pdf_combine(c("Basel_mort_pred_obs-41-60.pdf", "Bern_mort_pred_obs-41-60.pdf", "Geneva_mort_pred_obs-41-60.pdf", "Lausanne_mort_pred_obs-41-60.pdf", "Lucerne_mort_pred_obs-41-60.pdf", "St. Gallen_mort_pred_obs-41-60.pdf", "Winterthur_mort_pred_obs-41-60.pdf", "Zurich_mort_pred_obs-41-60.pdf"), "summary/mort_pred_obs-41-60.pdf")
 
-pdf_combine(c("Basel_mort_pred_obs-99-18.pdf", "Bern_mort_pred_obs-99-18.pdf", "Biel_mort_pred_obs-99-18.pdf", "Geneva_mort_pred_obs-99-18.pdf", "La Chaux-de-Fonds_mort_pred_obs-99-18.pdf", "Lausanne_mort_pred_obs-99-18.pdf", "Lucerne_mort_pred_obs-99-18.pdf", "St. Gallen_mort_pred_obs-99-18.pdf", "Winterthur_mort_pred_obs-99-18.pdf", "Zurich_mort_pred_obs-99-18.pdf"), "summary/mort_pred_obs-99-18.pdf")
+pdf_combine(c("Basel_mort_pred_obs-99-18.pdf", "Bern_mort_pred_obs-99-18.pdf", "Geneva_mort_pred_obs-99-18.pdf", "Lausanne_mort_pred_obs-99-18.pdf", "Lucerne_mort_pred_obs-99-18.pdf", "St. Gallen_mort_pred_obs-99-18.pdf", "Winterthur_mort_pred_obs-99-18.pdf", "Zurich_mort_pred_obs-99-18.pdf"), "summary/mort_pred_obs-99-18.pdf")
 
 pdf_combine(c("Basel_1947_ex_mort.pdf", "Basel_2003_ex_mort.pdf", "Basel_2015_ex_mort.pdf", "Basel_2018_ex_mort.pdf"), "summary/Basel_ex_mort.pdf")
 pdf_combine(c("Bern_1947_ex_mort.pdf", "Bern_2003_ex_mort.pdf", "Bern_2015_ex_mort.pdf", "Bern_2018_ex_mort.pdf"), "summary/Bern_ex_mort.pdf")
-pdf_combine(c("Biel_1947_ex_mort.pdf", "Biel_2003_ex_mort.pdf", "Biel_2015_ex_mort.pdf", "Biel_2018_ex_mort.pdf"), "summary/Biel_ex_mort.pdf")
+# pdf_combine(c("Biel_1947_ex_mort.pdf", "Biel_2003_ex_mort.pdf", "Biel_2015_ex_mort.pdf", "Biel_2018_ex_mort.pdf"), "summary/Biel_ex_mort.pdf")
 pdf_combine(c("Geneva_1947_ex_mort.pdf", "Geneva_2003_ex_mort.pdf", "Geneva_2015_ex_mort.pdf", "Geneva_2018_ex_mort.pdf"), "summary/Geneva_ex_mort.pdf")
-pdf_combine(c("La Chaux-de-Fonds_1947_ex_mort.pdf", "La Chaux-de-Fonds_2003_ex_mort.pdf", "La Chaux-de-Fonds_2015_ex_mort.pdf", "La Chaux-de-Fonds_2018_ex_mort.pdf"), "summary/La Chaux-de-Fonds_ex_mort.pdf")
+# pdf_combine(c("La Chaux-de-Fonds_1947_ex_mort.pdf", "La Chaux-de-Fonds_2003_ex_mort.pdf", "La Chaux-de-Fonds_2015_ex_mort.pdf", "La Chaux-de-Fonds_2018_ex_mort.pdf"), "summary/La Chaux-de-Fonds_ex_mort.pdf")
 pdf_combine(c("Lausanne_1947_ex_mort.pdf", "Lausanne_2003_ex_mort.pdf", "Lausanne_2015_ex_mort.pdf", "Lausanne_2018_ex_mort.pdf"), "summary/Lausanne_ex_mort.pdf")
 pdf_combine(c("Lucerne_1947_ex_mort.pdf", "Lucerne_2003_ex_mort.pdf", "Lucerne_2015_ex_mort.pdf", "Lucerne_2018_ex_mort.pdf"), "summary/Lucerne_ex_mort.pdf")
 pdf_combine(c("St. Gallen_1947_ex_mort.pdf", "St. Gallen_2003_ex_mort.pdf", "St. Gallen_2015_ex_mort.pdf", "St. Gallen_2018_ex_mort.pdf"), "summary/St. Gallen_ex_mort.pdf")
